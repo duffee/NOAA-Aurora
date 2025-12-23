@@ -4,7 +4,7 @@ use HTTP::Response;
 use LWP::UserAgent;
 use NOAA::Aurora;
 
-my $aurora = NOAA::Aurora->new();
+my $aurora = NOAA::Aurora->new(swpc => 'services.swpc.noaa.gov');
 
 my @responses = do {
     local $/ = undef;   # Slurp each section
@@ -66,11 +66,212 @@ subtest 'get_forecast' => sub {
     $forecast = $aurora->get_forecast();
     is($request, "$base/text/3-day-forecast.txt", '3 day forecast');
     ok(@$forecast > 0, 'Got entries');
+    is(
+        $forecast,
+        [{
+                'time' => '1751500800',
+                'kp'   => '4.67'
+            },
+            {
+                'time' => '1751511600',
+                'kp'   => '4.67'
+            },
+            {
+                'time' => '1751522400',
+                'kp'   => '4.00'
+            },
+            {
+                'time' => '1751533200',
+                'kp'   => '2.67'
+            },
+            {
+                'kp'   => '2.33',
+                'time' => '1751544000'
+            },
+            {
+                'time' => '1751554800',
+                'kp'   => '2.67'
+            },
+            {
+                'time' => '1751565600',
+                'kp'   => '3.00'
+            },
+            {
+                'time' => '1751576400',
+                'kp'   => '3.67'
+            },
+            {
+                'time' => '1751587200',
+                'kp'   => '2.67'
+            },
+            {
+                'time' => '1751598000',
+                'kp'   => '4.00'
+            },
+            {
+                'time' => '1751608800',
+                'kp'   => '3.00'
+            },
+            {
+                'time' => '1751619600',
+                'kp'   => '2.67'
+            },
+            {
+                'time' => '1751630400',
+                'kp'   => '1.67'
+            },
+            {
+                'time' => '1751641200',
+                'kp'   => '1.67'
+            },
+            {
+                'time' => '1751652000',
+                'kp'   => '2.00'
+            },
+            {
+                'kp'   => '2.67',
+                'time' => '1751662800'
+            },
+            {
+                'time' => '1751673600',
+                'kp'   => '3.00'
+            },
+            {
+                'kp'   => '2.67',
+                'time' => '1751684400'
+            },
+            {
+                'time' => '1751695200',
+                'kp'   => '2.33'
+            },
+            {
+                'kp'   => '2.00',
+                'time' => '1751706000'
+            },
+            {
+                'kp'   => '2.33',
+                'time' => '1751716800'
+            },
+            {
+                'time' => '1751727600',
+                'kp'   => '2.33'
+            },
+            {
+                'time' => '1751738400',
+                'kp'   => '2.33'
+            },
+            {
+                'time' => '1751749200',
+                'kp'   => '2.67'
+            }
+        ],
+        'Forecast correct'
+    );
     
-    # Check first entry: Jul 03 00-03UT -> 4.67
-    my $first = $forecast->[0];
-    ok($first->{time}, 'Has time');
-    is($first->{kp}, 4.67, 'Correct Kp for first entry');
+    $content = $responses[2];
+    $forecast = $aurora->get_forecast(time => 'iso');
+    is(
+        $forecast,
+        [{
+                'time' => '2024-12-31 00:00:00Z',
+                'kp'   => '0.33'
+            },
+            {
+                'time' => '2024-12-31 03:00:00Z',
+                'kp'   => '0.67'
+            },
+            {
+                'time' => '2024-12-31 06:00:00Z',
+                'kp'   => '2.33'
+            },
+            {
+                'kp'   => '1.33',
+                'time' => '2024-12-31 09:00:00Z'
+            },
+            {
+                'time' => '2024-12-31 12:00:00Z',
+                'kp'   => '5.00'
+            },
+            {
+                'kp'   => '6.67',
+                'time' => '2024-12-31 15:00:00Z'
+            },
+            {
+                'time' => '2024-12-31 18:00:00Z',
+                'kp'   => '5.33'
+            },
+            {
+                'time' => '2024-12-31 21:00:00Z',
+                'kp'   => '5.00'
+            },
+            {
+                'kp'   => '5.00',
+                'time' => '2025-01-01 00:00:00Z'
+            },
+            {
+                'time' => '2025-01-01 03:00:00Z',
+                'kp'   => '3.33'
+            },
+            {
+                'time' => '2025-01-01 06:00:00Z',
+                'kp'   => '4.33'
+            },
+            {
+                'kp'   => '3.67',
+                'time' => '2025-01-01 09:00:00Z'
+            },
+            {
+                'kp'   => '2.67',
+                'time' => '2025-01-01 12:00:00Z'
+            },
+            {
+                'kp'   => '2.33',
+                'time' => '2025-01-01 15:00:00Z'
+            },
+            {
+                'kp'   => '2.00',
+                'time' => '2025-01-01 18:00:00Z'
+            },
+            {
+                'time' => '2025-01-01 21:00:00Z',
+                'kp'   => '3.00'
+            },
+            {
+                'kp'   => '2.67',
+                'time' => '2025-01-02 00:00:00Z'
+            },
+            {
+                'kp'   => '2.00',
+                'time' => '2025-01-02 03:00:00Z'
+            },
+            {
+                'time' => '2025-01-02 06:00:00Z',
+                'kp'   => '2.00'
+            },
+            {
+                'kp'   => '2.00',
+                'time' => '2025-01-02 09:00:00Z'
+            },
+            {
+                'time' => '2025-01-02 12:00:00Z',
+                'kp'   => '2.00'
+            },
+            {
+                'kp'   => '2.00',
+                'time' => '2025-01-02 15:00:00Z'
+            },
+            {
+                'time' => '2025-01-02 18:00:00Z',
+                'kp'   => '2.00'
+            },
+            {
+                'kp'   => '2.33',
+                'time' => '2025-01-02 21:00:00Z'
+            }
+        ],
+        'Correct forecast with ISO times'
+    );
+
 };
 
 subtest 'get_outlook' => sub {
@@ -78,22 +279,202 @@ subtest 'get_outlook' => sub {
 
     my $outlook = $aurora->get_outlook(format => 'text');
     is($request, "$base/text/27-day-outlook.txt", '27 day outlook');
-    is($outlook, $responses[1], 'Content as expected');
-    
+    is($outlook, $responses[1],                   'Content as expected');
+
     $outlook = $aurora->get_outlook();
-    ok(@$outlook > 0, 'Got entries');
-    
-    # Check first entry: 2025 Mar 24 -> Flux 170, Ap 20, Kp 5
-    my $first = $outlook->[0];
-    ok($first->{time}, 'Has time');
-    is($first->{flux}, 170, 'Correct Flux');
-    is($first->{ap}, 20, 'Correct Ap');
-    is($first->{kp}, 5, 'Correct Kp');
+    is(
+        $outlook,
+        [{
+                'kp'   => '5',
+                'flux' => '170',
+                'ap'   => '20',
+                'time' => 1742774400
+            },
+            {
+                'time' => 1742860800,
+                'ap'   => '30',
+                'flux' => '170',
+                'kp'   => '6'
+            },
+            {
+                'time' => 1742947200,
+                'ap'   => '20',
+                'flux' => '165',
+                'kp'   => '5'
+            },
+            {
+                'time' => 1743033600,
+                'ap'   => '15',
+                'flux' => '160',
+                'kp'   => '4'
+            },
+            {
+                'kp'   => '4',
+                'flux' => '160',
+                'ap'   => '12',
+                'time' => 1743120000
+            },
+            {
+                'time' => 1743206400,
+                'ap'   => '8',
+                'flux' => '160',
+                'kp'   => '3'
+            },
+            {
+                'time' => 1743292800,
+                'ap'   => '5',
+                'flux' => '165',
+                'kp'   => '2'
+            },
+            {
+                'time' => 1743379200,
+                'ap'   => '5',
+                'flux' => '165',
+                'kp'   => '2'
+            },
+            {
+                'flux' => '170',
+                'kp'   => '2',
+                'time' => 1743465600,
+                'ap'   => '5'
+            },
+            {
+                'flux' => '170',
+                'kp'   => '2',
+                'time' => 1743552000,
+                'ap'   => '5'
+            },
+            {
+                'flux' => '175',
+                'kp'   => '3',
+                'time' => 1743638400,
+                'ap'   => '10'
+            },
+            {
+                'kp'   => '5',
+                'flux' => '180',
+                'ap'   => '20',
+                'time' => 1743724800
+            },
+            {
+                'kp'   => '6',
+                'flux' => '180',
+                'ap'   => '35',
+                'time' => 1743811200
+            },
+            {
+                'kp'   => '3',
+                'flux' => '180',
+                'ap'   => '10',
+                'time' => 1743897600
+            },
+            {
+                'ap'   => '12',
+                'time' => 1743984000,
+                'kp'   => '4',
+                'flux' => '180'
+            },
+            {
+                'ap'   => '30',
+                'time' => 1744070400,
+                'kp'   => '5',
+                'flux' => '180'
+            },
+            {
+                'time' => 1744156800,
+                'ap'   => '40',
+                'flux' => '185',
+                'kp'   => '6'
+            },
+            {
+                'ap'   => '25',
+                'time' => 1744243200,
+                'kp'   => '5',
+                'flux' => '185'
+            },
+            {
+                'time' => 1744329600,
+                'ap'   => '18',
+                'flux' => '185',
+                'kp'   => '5'
+            },
+            {
+                'kp'   => '3',
+                'flux' => '180',
+                'ap'   => '10',
+                'time' => 1744416000
+            },
+            {
+                'flux' => '175',
+                'kp'   => '5',
+                'time' => 1744502400,
+                'ap'   => '15'
+            },
+            {
+                'ap'   => '12',
+                'time' => 1744588800,
+                'kp'   => '4',
+                'flux' => '170'
+            },
+            {
+                'kp'   => '3',
+                'flux' => '170',
+                'ap'   => '8',
+                'time' => 1744675200
+            },
+            {
+                'kp'   => '2',
+                'flux' => '165',
+                'ap'   => '5',
+                'time' => 1744761600
+            },
+            {
+                'kp'   => '3',
+                'flux' => '160',
+                'ap'   => '10',
+                'time' => 1744848000
+            },
+            {
+                'time' => 1744934400,
+                'ap'   => '12',
+                'flux' => '160',
+                'kp'   => '4'
+            },
+            {
+                'kp'   => '3',
+                'flux' => '160',
+                'ap'   => '8',
+                'time' => 1745020800
+            }
+        ],
+        'Corrent outlook entries'
+    );
+
+    # ISO Time test
+    my $iso_o = $aurora->get_outlook(
+        time   => 'iso',
+        format => 'none'
+    );
+    like(
+        $iso_o->[0],
+        {
+            'kp'   => '5',
+            'flux' => '170',
+            'ap'   => '20',
+            'time' => '2025-03-24 00:00:00Z'
+        },
+        'Got ISO time match'
+    );
+
 };
 
+subtest 'kp_to_g' => sub {
+    my @test = qw/4 5 6 7 7.5 8 9/;
+    my @exp  = qw/0 G1 G2 G3 G4 G4 G5/;
+    is(NOAA::Aurora::kp_to_g($test[$_]), $exp[$_], 'G as expected') for 0..6;
+};
 
 done_testing;
-
 
 __DATA__
 :Product: 3-Day Forecast

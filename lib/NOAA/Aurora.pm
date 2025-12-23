@@ -235,27 +235,30 @@ sub get_probability {
     return $args{hash} ? $hash : $json;
 }
 
-sub get_forecast {
-    my $self = shift;
-    my %args = @_;
-    my $url  = "$self->{swpc}/text/3-day-forecast.txt";
-    my $resp = $self->_get_ua($url);
-    my $content = $resp->decoded_content || $resp->content;
+sub _get_text_source {
+    my $self    = shift;
+    my $source  = shift;
+    my %args    = @_;
+    my $url     = "$self->{swpc}/text/$source.txt";
+    my $resp    = $self->_get_ua($url);
+    my $content = $resp->decoded_content;
 
     return $content if $args{format} && $args{format} eq 'text';
 
-    return $self->_parse_geo($content, $args{time});
+    my @args = ($content, lc($args{time} || ''));
+    return $source eq '3-day-forecast'
+        ? $self->_parse_geo(@args)
+        : $self->_parse_outlook(@args);
+}
+
+sub get_forecast {
+    my $self = shift;
+    return $self->_get_text_source('3-day-forecast', @_);
 }
 
 sub get_outlook {
     my $self = shift;
-    my %args = @_;
-
-    my $resp = $self->_get_ua("$self->{swpc}/text/27-day-outlook.txt");
-    my $content = $resp->decoded_content || $resp->content;
-    
-    return $content if $args{format} && $args{format} eq 'text';
-    return $self->_parse_outlook($content);
+    return $self->_get_text_source('27-day-outlook', @_);
 }
 
 sub kp_to_g {
@@ -312,40 +315,47 @@ sub _set_cache {
     return $data;
 }
 
+
+# Parse from last day to first, passing ref_month being the last month processed
 sub _parse_mon_day {
-    my $date        = shift;
+    my ($date, $ref_year, $ref_mon) = @_;
     my ($mon, $day) = split /\s+/, $date;
     $mon = mon_to_num($mon);
-    my ($sec, $min, $hour, $cur_day, $cur_mon, $year) = gmtime();
-    $year += 1900;
-    $cur_mon++;
-    
-    $year += 1 if $cur_mon == 12 && $mon == 1;
-    $year -= 1 if $cur_mon == 1 && $mon == 12;
-    
-    return sprintf("$year-%02d-%02d", $mon, $day);
+
+    $ref_year-- if $ref_mon && $mon > $ref_mon;
+    $date = sprintf("%d-%02d-%02d", $ref_year, $mon, $day);
+
+    return wantarray ? ($date, $mon) : $date;
 }
 
 sub _parse_geo {
-    my $self  = shift;
-    my $data  = shift;
-    my $time  = shift || '';
+    my ($self, $data , $time) = @_;
     my @lines = split /\n/, $data;
     my $g     = qr/(?:\(G\d\)\s+)?/;
-    my @dates;
     
+    # Find year in the "NOAA Kp index breakdown" or "breakdown" line
+    my $year;
     while (defined(my $line = shift @lines)) {
-        # Regex: Month Day Month Day ...
+         if ($line =~ /Kp index breakdown\s+.*(\d{4})/i) {
+             $year = $1;
+             last;
+         }
+    }
+
+    # Date headers
+    my @dates;
+    while (defined(my $line = shift @lines)) {
         if ($line =~ /^\s*([A-Za-z]{3}\s+\d+)\s+([A-Za-z]{3}\s+\d+)\s+([A-Za-z]{3}\s+\d+)/) {
-            @dates = map {_parse_mon_day($_)} $1, $2, $3;
+            my ($dt3, $ref_mon) = _parse_mon_day($3, $year);
+            @dates = map {scalar _parse_mon_day($_, $year, $ref_mon)} ($1, $2);
+            push @dates, $dt3;
             last;
         }
     }
-    
-    return [] unless @dates;
-    
-    my %kp_data;
 
+    return [] unless @dates;
+
+    my %kp_data;
     foreach my $line (@lines) {
         if ($line =~ /^\s*(\d{2})-\d{2}UT\s+([\d.]+)\s+$g([\d.]+)\s+$g([\d.]+)/) {
             my ($t, @kp) = ($1, $2, $3, $4);
@@ -354,27 +364,23 @@ sub _parse_geo {
             $kp_data{$times[$_]} = $kp[$_] for 0..2;
         }
     }
-    
+
     my @result = map {{time => $_, kp => $kp_data{$_}}} sort keys %kp_data;
     return \@result;
 }
 
 sub _parse_outlook {
-    my ($self, $data) = @_;
+    my ($self, $data, $time) = @_;
     my @lines = split /\n/, $data;
     my @result;
-    
+
     foreach my $line (@lines) {
-        # Format: 2025 Mar 24     170          20          5
         if ($line =~ /^\s*(\d{4})\s+([A-Z][a-z]{2})\s+(\d{2})\s+(\d+)\s+(\d+)\s+(\d+)/) {
             my ($year, $mon_str, $day, $flux, $ap, $kp) = ($1, $2, $3, $4, $5, $6);
-            my $mnum = mon_to_num($mon_str) - 1;
+            my $mnum = mon_to_num($mon_str);
             
-            my $ts;
-            eval {
-                $ts = timegm(0, 0, 0, $day, $mnum, $year);
-            };
-            next if $@;
+            my $dt = sprintf("$year-%02d-%02d 00:00:00Z", $mnum, $day);
+            my $ts = (lc($time||'') eq 'iso') ? $dt : datetime_to_ts($dt);
             
             push @result, {
                 time => $ts,
