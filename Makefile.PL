@@ -18,6 +18,7 @@ my %WriteMakefileArgs = (
         'Test2::Tools::Exception' => '0',
         'LWP::UserAgent'          => '0',
         'HTTP::Response'          => '0',
+        'JSON'                    => '0'
     },
     PREREQ_PM  => {
         'Weather::API::Base' => '0.4',

@@ -63,6 +63,9 @@ Default: C<unix>.
 
 =back
 
+Note that the module base is L<Weather::API::Base>, so some additional parameters
+are inherited - see the base module for details.
+
 =head1 METHODS
 
 =head2 C<get_image>
@@ -91,7 +94,7 @@ Optional parameters:
     my $probability = $aurora->get_probability(
         lat  => $lat,
         lon  => $lon,
-        hash => $perlhash?
+        hash => $return_hash?
     );
 
 Fetches the aurora probability at a specific latitude and longitude if specified,
