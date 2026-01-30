@@ -97,7 +97,7 @@ Optional parameters:
         hash => $return_hash?
     );
 
-Fetches the aurora probability at a specific latitude and longitude if specified,
+Fetches the aurora probability at a specific latitude and longitude (where negative longitude means west) if specified,
 otherwise will return all the globe. Can return the original NOAA JSON string, or
 decode it into a Perl hash of hashes:
 
